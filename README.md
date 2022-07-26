@@ -1,2 +1,2 @@
-# lightweight-charts
+# lwchart
 Created with CodeSandbox

@@ -58,7 +58,9 @@ for (let i = 0; i < 150; i++) {
   /**
    * 1. get configuration ( start time, speed, tick_timeframe, symbol, candle timeframe)
    * 2. get requested candles ( 100*tick_timeframe/timeframe )
-   *
+   * 3. update series using available data.
+   * 4. puase and start button ( default all things are stopped.)
+   * 5. date picker or using scroller change date..
    * **/
   const bar = nextBar();
   candleSeries.update(bar);

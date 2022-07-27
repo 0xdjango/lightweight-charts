@@ -1,6 +1,22 @@
 import "./styles.css";
 import { createChart, CrosshairMode } from "lightweight-charts";
 
+let config = {
+  delay: 3000,
+  symbol: "BTCUSDT",
+  interval: "5m",
+  startTime: 1648230840000
+};
+
+export async function makeApiRequest(path) {
+  try {
+    const response = await fetch(`${path}`);
+    return response.json();
+  } catch (error) {
+    throw new Error(`CryptoCompare request error: ${error.status}`);
+  }
+}
+
 const chart = createChart(document.body, {
   width: window.innerWidth,
   height: window.innerHeight,
@@ -83,7 +99,25 @@ function resize() {
 
   setTimeout(() => chart.timeScale().fitContent(), 0);
 }
-function get_next_bars(start_ts) {}
+function nextbar() {
+  let barstorage = [];
+  const urlParameters = {
+    symbol: config["symbol"],
+    interval: config["interval"],
+    endTime: config["startTime"]
+  };
+  //console.log(time * 1000)
+  const query = Object.keys(urlParameters)
+    .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
+    .join("&");
+
+  var xhr = new XMLHttpRequest();
+  var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
+  xhr.open("GET", url, true);
+}
+let element = document.getElementById("play_btn");
+element.addEventListener("click", alert("123"));
+
 function nextBar() {
   if (!nextBar.date) nextBar.date = new Date(2020, 0, 0);
   if (!nextBar.bar) nextBar.bar = { open: 100, high: 104, low: 98, close: 103 };

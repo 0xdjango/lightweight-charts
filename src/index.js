@@ -74,18 +74,18 @@ const volumeSeries = chart.addHistogramSeries({
 });
 
 /**for (let i = 0; i < 150; i++) {
-  
-   * 1. get configuration ( start time, speed, tick_timeframe, symbol, candle timeframe)
-   * 2. get requested candles ( 100*tick_timeframe/timeframe )
-   * 3. update series using available data.
-   * 4. puase and start button ( default all things are stopped.)
-   * 5. date picker or using scroller change date..
-   * 
+
+ * 1. get configuration ( start time, speed, tick_timeframe, symbol, candle timeframe)
+ * 2. get requested candles ( 100*tick_timeframe/timeframe )
+ * 3. update series using available data.
+ * 4. puase and start button ( default all things are stopped.)
+ * 5. date picker or using scroller change date..
+ *
   const bar = nextBar();
   candleSeries.update(bar);
   volumeSeries.update(bar);
 }
-**/
+ **/
 
 resize();
 
@@ -141,6 +141,7 @@ decrease_button.addEventListener("click", function () {
     //volumeSeries.update(bar);
   }, config["delay"]);
 });
+
 function nextBar() {
   if (storage_bars.length === 0) {
     // it means nothing has started => we should build some history ( 1000 bars in enought)
@@ -156,23 +157,55 @@ function nextBar() {
 
     var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
     let tempdata = makeApiRequest(url);
-    tempdata.forEach((element) => {
+    tempdata.forEach((el) => {
       let v = {
-        time: element[0],
-        open: element[1],
-        high: element[2],
-        low: element[3],
-        close: element[4]
+        time: el[0],
+        open: el[1],
+        high: el[2],
+        low: el[3],
+        close: el[4]
       };
+      played_bars.push(v);
     });
-    candleSeries.setData = [];
+    candleSeries.setData = played_bars;
 
     //addCandlestickSeries.setData
+  } else if (storage_bars.length === 1) {
+    // it means the series started to play but it run out of bars for playing . we should add new bars.
+    const urlParameters = {
+      symbol: config["symbol"],
+      interval: config["interval"],
+      startTime: config["startTime"]
+    };
+    //console.log(time * 1000)
+    const query = Object.keys(urlParameters)
+      .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
+      .join("&");
+
+    var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
+    let tempdata = makeApiRequest(url);
+    tempdata.forEach((el) => {
+      let v = {
+        time: el[0],
+        open: el[1],
+        high: el[2],
+        low: el[3],
+        close: el[4]
+      };
+      storage_bars.push(v);
+    });
+    let first_candle = storage_bars.shift();
+    played_bars.push(first_candle);
+    nextBar.bar.time = first_candle[0];
+    nextBar.bar.open = first_candle[1];
+    nextBar.bar.high = first_candle[2];
+    nextBar.bar.low = first_candle[3];
+    nextBar.bar.close = first_candle[4];
   }
 }
 
 /**
-function nextBar() {
+ function nextBar() {
   if (!nextBar.date) nextBar.date = new Date(2020, 0, 0);
   if (!nextBar.bar) nextBar.bar = { open: 100, high: 104, low: 98, close: 103 };
 

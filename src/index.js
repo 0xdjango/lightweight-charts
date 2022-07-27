@@ -2,7 +2,7 @@ import "./styles.css";
 import { createChart, CrosshairMode } from "lightweight-charts";
 
 let config = {
-  delay: 3000,
+  delay: 10000,
   symbol: "BTCUSDT",
   interval: "5m",
   startTime: 1648230840000
@@ -91,7 +91,7 @@ resize();
 
 let maininterval = setInterval(() => {
   const bar = nextBar();
-  console.log(bar);
+  //console.log(bar)
   candleSeries.update(bar);
 }, config["delay"]);
 
@@ -109,7 +109,7 @@ play_button.addEventListener("click", function () {
   maininterval = setInterval(() => {
     const bar = nextBar();
     candleSeries.update(bar);
-    volumeSeries.update(bar);
+    //volumeSeries.update(bar);
   }, config["delay"]);
 });
 let pause_button = document.getElementById("pause_btn");
@@ -161,7 +161,12 @@ function nextBar() {
     xhr.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
         const tempdata = JSON.parse(this.responseText);
+        //console.log(tempdata)
+
         let last_candle = tempdata.pop();
+        let d = new Date(parseInt(last_candle[0]));
+        nextBar.bar.time = d.getTime();
+        nextBar.date = d.getDate();
         nextBar.bar.time = last_candle[0];
         nextBar.bar.open = last_candle[1];
         nextBar.bar.high = last_candle[2];
@@ -214,7 +219,9 @@ function nextBar() {
         });
         let first_candle = storage_bars.shift();
         played_bars.push(first_candle);
-        nextBar.bar.time = first_candle[0];
+        let d = new Date(parseInt(first_candle[0]));
+        nextBar.bar.time = d.getTime();
+        nextBar.date = d.getDate();
         nextBar.bar.open = first_candle[1];
         nextBar.bar.high = first_candle[2];
         nextBar.bar.low = first_candle[3];
@@ -225,6 +232,9 @@ function nextBar() {
   } else {
     let first_candle = storage_bars.shift();
     played_bars.push(first_candle);
+    let d = new Date(parseInt(first_candle[0]));
+    nextBar.bar.time = d.getTime();
+    nextBar.date = d.getDate();
     nextBar.bar.time = first_candle[0];
     nextBar.bar.open = first_candle[1];
     nextBar.bar.high = first_candle[2];

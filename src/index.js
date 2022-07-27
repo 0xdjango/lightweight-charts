@@ -1,12 +1,13 @@
 import "./styles.css";
 import {createChart, CrosshairMode} from "lightweight-charts";
 
-let debug = true
-let config = {
+let debug = false
+var config = {
     delay: 500,
     symbol: "BTCUSDT",
     interval: "15m",
-    startTime: 1567900800000
+    startTime: 1567900800000,
+    limit:20
 };
 
 let played_bars = [];
@@ -44,12 +45,12 @@ const chart = createChart(document.body, {
     timeScale: {
         tickMarkFormatter: (time) => {
             const date = new Date(time);
-            return `${date.getHours()}`;
+            return `${date.getHours()}:${date.getMinutes()}`;
         },
         borderColor: "#485158"
     },
     watermark: {
-        text: "XYZ",
+        text: "BTCUSDTPERP",
         fontSize: 256,
         color: "rgba(256, 256, 256, 0.1)",
         visible: true
@@ -94,18 +95,20 @@ const volumeSeries = chart.addHistogramSeries({
 
 resize();
 let maininterval = setInterval(() => {
-    if(storage_bars.length<2){
-    storage_bars = check_bar_storage(storage_bars)}
-    else {
+        if(played_bars.length>2){
+            console.log("main interval: ",played_bars[played_bars.length-1].time)
+        }
+
         const bar = nextBar();
-        console.log(bar.time)
-        console.log("start time: ", config['startTime'], bar)
+       // console.log(bar.time)
+        //console.log("start time: ", config['startTime'], bar)
 
         if (debug) {
             console.log("storage bars: ", storage_bars, "bar", bar)
         }
-        candleSeries.update(bar);
-    }
+        if(bar){
+        candleSeries.update(bar);}
+
 
 
     //volumeSeries.update(bar);
@@ -161,15 +164,21 @@ decrease_button.addEventListener("click", function () {
     }, config["delay"]);
 });
 
-function check_bar_storage(storage) {
-    if (storage.length < 2) {
-        if (debug) {
-            console.log("[Storege Empty] storege is empty. try to fill history")
-        }
+
+function nextBar() {
+    if (debug) {
+        console.log("[nextBar called ]", "storage bars : ", storage_bars)
+    }
+    let start_time = config['startTime']
+    if(played_bars.length>0){
+        start_time = played_bars[played_bars.length-1]['time']
+    }
+    if(storage_bars.length<2){
         const urlParameters = {
             symbol: config["symbol"],
             interval: config["interval"],
-            startTime: config["startTime"]
+            startTime: start_time,
+            limit:config['limit']
         };
         const query = Object.keys(urlParameters)
             .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
@@ -183,6 +192,7 @@ function check_bar_storage(storage) {
                 if (debug) {
                     console.log("[Storege Empty] getting bars from server.")
                 }
+                console.log(tempdata[0])
                 for (let i = 0; i < tempdata.length; i++) {
                     let ts = new Date(parseInt(tempdata[i][0]))
                     let v = {
@@ -192,7 +202,7 @@ function check_bar_storage(storage) {
                             month: ts.getMonth(),
                             day: ts.getDate(),
                         }*/
-                        time:ts,
+                        time:parseInt(tempdata[i][0])/1000,
                         open: parseFloat(tempdata[i][1]),
                         high: parseFloat(tempdata[i][2]),
                         low: parseFloat(tempdata[i][3]),
@@ -202,7 +212,7 @@ function check_bar_storage(storage) {
                             ? "rgba(255, 128, 159, 0.25)"
                             : "rgba(107, 255, 193, 0.25)"
                     };
-                    storage.push(v);
+                    storage_bars.push(v);
                 }
 
             }
@@ -210,33 +220,30 @@ function check_bar_storage(storage) {
         xhr.send();
 
     }
-    return storage
-}
+    else{
+        //  we should construct new bar and release it
+        // update config starttime
+        // update played bars
+        // remove item from storagebars
 
-function nextBar() {
-    if (debug) {
-        console.log("[nextBar called ]", "storage bars : ", storage_bars)
+        let new_bar = storage_bars[0];
+        //nextBar.date = new Date(new_bar.timestamp);
+        nextBar.bar = {
+            time:new_bar.time,
+            open:new_bar.open,
+            high:new_bar.high,
+            low:new_bar.low,
+            close:new_bar.close,
+
+
+        }
+        played_bars.push(new_bar)
+        storage_bars.shift()
+
+        return nextBar.bar
     }
 
-    //  we should construct new bar and release it
-    // update config starttime
-    // update played bars
-    // remove item from storagebars
-
-    let new_bar = storage_bars[0];
-    nextBar.date = new Date(new_bar.timestamp);
-    nextBar.bar = {
-        time:new_bar.time,
-        open:new_bar.open,
-        high:new_bar.high,
-        low:new_bar.low,
-        close:new_bar.close,
 
 
-    }
-    config['startTime'] = new_bar.timestamp*1000
-    played_bars.push(new_bar)
-    storage_bars.shift()
-    return nextBar.bar
 }
 

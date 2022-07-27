@@ -8,6 +8,9 @@ let config = {
   startTime: 1648230840000
 };
 
+let played_bars = [];
+let storage_bars = [];
+
 export async function makeApiRequest(path) {
   try {
     const response = await fetch(`${path}`);
@@ -87,9 +90,9 @@ const volumeSeries = chart.addHistogramSeries({
 resize();
 
 let maininterval = setInterval(() => {
-  const bar = nextBar();
-  candleSeries.update(bar);
-  volumeSeries.update(bar);
+  //const bar = nextBar();
+  //candleSeries.update(bar);
+  //volumeSeries.update(bar);
 }, config["delay"]);
 
 window.addEventListener("resize", resize, false);
@@ -99,22 +102,6 @@ function resize() {
 
   setTimeout(() => chart.timeScale().fitContent(), 0);
 }
-function nextbar() {
-  let barstorage = [];
-  const urlParameters = {
-    symbol: config["symbol"],
-    interval: config["interval"],
-    endTime: config["startTime"]
-  };
-  //console.log(time * 1000)
-  const query = Object.keys(urlParameters)
-    .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
-    .join("&");
-
-  var xhr = new XMLHttpRequest();
-  var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
-  xhr.open("GET", url, true);
-}
 
 // buttons listeners
 let play_button = document.getElementById("play_btn");
@@ -123,7 +110,7 @@ play_button.addEventListener("click", function () {
     const bar = nextBar();
     candleSeries.update(bar);
     volumeSeries.update(bar);
-  }, 1000);
+  }, config["delay"]);
 });
 let pause_button = document.getElementById("pause_btn");
 pause_button.addEventListener("click", function () {
@@ -131,23 +118,60 @@ pause_button.addEventListener("click", function () {
 });
 
 let increase_button = document.getElementById("increase");
+
 increase_button.addEventListener("click", function () {
+  clearInterval(maininterval);
+  config["delay"] -= 100;
+  console.log(config["delay"]);
   maininterval = setInterval(() => {
     const bar = nextBar();
     candleSeries.update(bar);
     volumeSeries.update(bar);
-  }, config["delay"] - 100);
+  }, config["delay"]);
 });
 
 let decrease_button = document.getElementById("decrease");
 decrease_button.addEventListener("click", function () {
+  clearInterval(maininterval);
+  config["delay"] += 100;
+  console.log(config["delay"]);
   maininterval = setInterval(() => {
-    const bar = nextBar();
-    candleSeries.update(bar);
-    volumeSeries.update(bar);
-  }, config["delay"] + 100);
+    //const bar = nextBar();
+    //candleSeries.update(bar);
+    //volumeSeries.update(bar);
+  }, config["delay"]);
 });
+function nextBar() {
+  if (storage_bars.length === 0) {
+    // it means nothing has started => we should build some history ( 1000 bars in enought)
+    const urlParameters = {
+      symbol: config["symbol"],
+      interval: config["interval"],
+      endTime: config["startTime"]
+    };
+    //console.log(time * 1000)
+    const query = Object.keys(urlParameters)
+      .map((name) => `${name}=${encodeURIComponent(urlParameters[name])}`)
+      .join("&");
 
+    var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
+    let tempdata = makeApiRequest(url);
+    tempdata.forEach((element) => {
+      let v = {
+        time: element[0],
+        open: element[1],
+        high: element[2],
+        low: element[3],
+        close: element[4]
+      };
+    });
+    candleSeries.setData = [];
+
+    //addCandlestickSeries.setData
+  }
+}
+
+/**
 function nextBar() {
   if (!nextBar.date) nextBar.date = new Date(2020, 0, 0);
   if (!nextBar.bar) nextBar.bar = { open: 100, high: 104, low: 98, close: 103 };
@@ -183,3 +207,4 @@ function nextBar() {
 
   return nextBar.bar;
 }
+ **/

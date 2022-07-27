@@ -60,7 +60,7 @@ const candleSeries = chart.addCandlestickSeries({
   wickUpColor: "#838ca1"
 });
 
-const volumeSeries = chart.addHistogramSeries({
+/*const volumeSeries = chart.addHistogramSeries({
   color: "#385263",
   lineWidth: 2,
   priceFormat: {
@@ -72,7 +72,7 @@ const volumeSeries = chart.addHistogramSeries({
     bottom: 0
   }
 });
-
+*/
 /**for (let i = 0; i < 150; i++) {
 
  * 1. get configuration ( start time, speed, tick_timeframe, symbol, candle timeframe)
@@ -90,9 +90,9 @@ const volumeSeries = chart.addHistogramSeries({
 resize();
 
 let maininterval = setInterval(() => {
-  //const bar = nextBar();
-  //candleSeries.update(bar);
-  //volumeSeries.update(bar);
+  const bar = nextBar();
+  console.log(bar);
+  candleSeries.update(bar);
 }, config["delay"]);
 
 window.addEventListener("resize", resize, false);
@@ -156,25 +156,32 @@ function nextBar() {
       .join("&");
 
     var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
-    let tempdata = makeApiRequest(url);
-    let last_candle = tempdata.pop();
-    nextBar.bar.time = last_candle[0];
-    nextBar.bar.open = last_candle[1];
-    nextBar.bar.high = last_candle[2];
-    nextBar.bar.low = last_candle[3];
-    nextBar.bar.close = last_candle[4];
-    tempdata.forEach((el) => {
-      let v = {
-        time: el[0],
-        open: el[1],
-        high: el[2],
-        low: el[3],
-        close: el[4]
-      };
-      played_bars.push(v);
-    });
-    candleSeries.setData = played_bars;
-    return nextBar.bar;
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        const tempdata = JSON.parse(this.responseText);
+        let last_candle = tempdata.pop();
+        nextBar.bar.time = last_candle[0];
+        nextBar.bar.open = last_candle[1];
+        nextBar.bar.high = last_candle[2];
+        nextBar.bar.low = last_candle[3];
+        nextBar.bar.close = last_candle[4];
+        tempdata.forEach((el) => {
+          let v = {
+            time: el[0],
+            open: el[1],
+            high: el[2],
+            low: el[3],
+            close: el[4]
+          };
+          played_bars.push(v);
+        });
+        candleSeries.setData = played_bars;
+        return nextBar.bar;
+      }
+    };
+    xhr.send();
 
     //addCandlestickSeries.setData
   } else if (storage_bars.length === 1) {
@@ -190,25 +197,30 @@ function nextBar() {
       .join("&");
 
     var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
-    let tempdata = makeApiRequest(url);
-    tempdata.forEach((el) => {
-      let v = {
-        time: el[0],
-        open: el[1],
-        high: el[2],
-        low: el[3],
-        close: el[4]
-      };
-      storage_bars.push(v);
-    });
-    let first_candle = storage_bars.shift();
-    played_bars.push(first_candle);
-    nextBar.bar.time = first_candle[0];
-    nextBar.bar.open = first_candle[1];
-    nextBar.bar.high = first_candle[2];
-    nextBar.bar.low = first_candle[3];
-    nextBar.bar.close = first_candle[4];
-
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        const tempdata = JSON.parse(this.responseText);
+        tempdata.forEach((el) => {
+          let v = {
+            time: el[0],
+            open: el[1],
+            high: el[2],
+            low: el[3],
+            close: el[4]
+          };
+          storage_bars.push(v);
+        });
+        let first_candle = storage_bars.shift();
+        played_bars.push(first_candle);
+        nextBar.bar.time = first_candle[0];
+        nextBar.bar.open = first_candle[1];
+        nextBar.bar.high = first_candle[2];
+        nextBar.bar.low = first_candle[3];
+        nextBar.bar.close = first_candle[4];
+      }
+    };
     return nextBar.bar;
   } else {
     let first_candle = storage_bars.shift();

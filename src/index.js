@@ -157,6 +157,12 @@ function nextBar() {
 
     var url = `https://fapi.binance.com/fapi/v1/klines?${query}`;
     let tempdata = makeApiRequest(url);
+    let last_candle = tempdata.pop();
+    nextBar.bar.time = last_candle[0];
+    nextBar.bar.open = last_candle[1];
+    nextBar.bar.high = last_candle[2];
+    nextBar.bar.low = last_candle[3];
+    nextBar.bar.close = last_candle[4];
     tempdata.forEach((el) => {
       let v = {
         time: el[0],
@@ -168,6 +174,7 @@ function nextBar() {
       played_bars.push(v);
     });
     candleSeries.setData = played_bars;
+    return nextBar.bar;
 
     //addCandlestickSeries.setData
   } else if (storage_bars.length === 1) {
@@ -201,6 +208,8 @@ function nextBar() {
     nextBar.bar.high = first_candle[2];
     nextBar.bar.low = first_candle[3];
     nextBar.bar.close = first_candle[4];
+
+    return nextBar.bar;
   }
 }
 

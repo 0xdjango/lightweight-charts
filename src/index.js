@@ -210,6 +210,16 @@ function nextBar() {
     nextBar.bar.close = first_candle[4];
 
     return nextBar.bar;
+  } else {
+    let first_candle = storage_bars.shift();
+    played_bars.push(first_candle);
+    nextBar.bar.time = first_candle[0];
+    nextBar.bar.open = first_candle[1];
+    nextBar.bar.high = first_candle[2];
+    nextBar.bar.low = first_candle[3];
+    nextBar.bar.close = first_candle[4];
+
+    return nextBar.bar;
   }
 }
 
